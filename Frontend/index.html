@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecureShare | End-to-End Encrypted File Sharing</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated background gradient */
+    body::before {
+      content: '';
+      position: fixed;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 224, 255, 0.15), transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.15), transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.1), transparent 50%);
+      animation: gradientShift 15s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(5%, 5%) rotate(120deg); }
+      66% { transform: translate(-5%, 5%) rotate(240deg); }
+    }
+
+    /* Floating particles */
+    .particle {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: rgba(0, 224, 255, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 20s infinite ease-in-out;
+      z-index: -1;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translate(100vw, -100vh); opacity: 0; }
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 3rem;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 224, 255, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .navbar h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .navbar nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .navbar nav a {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .navbar nav a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 224, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .navbar nav a:hover::before {
+      left: 100%;
+    }
+
+    .navbar nav a:hover {
+      color: #00e0ff;
+      background: rgba(0, 224, 255, 0.1);
+    }
+
+    /* News Ticker Styles */
+    .news-ticker {
+      background: linear-gradient(135deg, rgba(0, 224, 255, 0.1), rgba(147, 51, 234, 0.1));
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 224, 255, 0.2);
+      padding: 1rem 3rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .news-ticker-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: scrollNews 30s linear infinite;
+    }
+
+    @keyframes scrollNews {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .news-ticker:hover .news-ticker-content {
+      animation-play-state: paused;
+    }
+
+    .news-badge {
+      background: linear-gradient(135deg, #ff3366, #ff6b99);
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .news-text {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.95rem;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    /* News Section Modal */
+    .news-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .news-modal-content {
+      background: rgba(20, 20, 30, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 3rem;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid rgba(0, 224, 255, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 224, 255, 0.3);
+      position: relative;
+    }
+
+    .news-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(0, 224, 255, 0.2);
+    }
+
+    .news-modal-header h2 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .close-modal {
+      background: rgba(255, 51, 102, 0.2);
+      border: 2px solid rgba(255, 51, 102, 0.5);
+      color: #ff3366;
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+    }
+
+    .close-modal:hover {
+      background: rgba(255, 51, 102, 0.4);
+      transform: rotate(90deg);
+    }
+
+    .news-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .news-item {
+      background: rgba(0, 224, 255, 0.05);
+      border: 1px solid rgba(0, 224, 255, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .news-item:hover {
+      background: rgba(0, 224, 255, 0.1);
+      border-color: rgba(0, 224, 255, 0.4);
+      transform: translateX(10px);
+    }
+
+    .news-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.8rem;
+    }
+
+    .news-category {
+      background: linear-gradient(135deg, #00e0ff, #0099cc);
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .news-date {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+    }
+
+    .news-item h3 {
+      color: #00e0ff;
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .news-item p {
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .news-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #9333ea;
+      font-weight: 600;
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .news-link:hover {
+      color: #c084fc;
+      transform: translateX(5px);
+    }
+
+    /* Scrollbar styles for news modal */
+    .news-modal-content::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .news-modal-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    .news-modal-content::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      border-radius: 10px;
+    }
+
+    .news-modal-content::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #00f0ff, #a855f7);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem 2rem;
+      gap: 3rem;
+    }
+
+    .hero-section {
+      text-align: center;
+      max-width: 900px;
+      animation: fadeIn 1s ease-out;
+    }
+
+    .hero-section h2 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00e0ff, #9333ea, #00e0ff);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.5rem;
+      animation: gradientFlow 3s ease infinite;
+    }
+
+    @keyframes gradientFlow {
+      0%, 100% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+    }
+
+    .hero-section p {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 2.5rem;
+      line-height: 1.8;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 2rem 0;
+    }
+
+    .feature-card {
+      background: rgba(20, 20, 30, 0.4);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 2rem;
+      border: 1px solid rgba(0, 224, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 224, 255, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: rgba(0, 224, 255, 0.5);
+      box-shadow: 0 20px 40px rgba(0, 224, 255, 0.3);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .feature-card h3 {
+      font-size: 1.4rem;
+      color: #00e0ff;
+      margin-bottom: 0.8rem;
+      font-weight: 700;
+    }
+
+    .feature-card p {
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .cta-btn {
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      padding: 1rem 2.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1.1rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 224, 255, 0.4);
+    }
+
+    .cta-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(0, 224, 255, 0.5);
+    }
+
+    .stats-section {
+      display: flex;
+      gap: 3rem;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .card {
+      background: rgba(20, 20, 30, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 3rem;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      border: 1px solid rgba(0, 224, 255, 0.2);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: cardEnter 0.6s ease-out;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 
+        0 20px 60px rgba(0, 224, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border-color: rgba(0, 224, 255, 0.4);
+    }
+
+    .card h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #fff, #00e0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="file"] {
+      width: 100%;
+      padding: 1rem;
+      margin: 0.8rem 0;
+      border: 2px solid rgba(0, 224, 255, 0.2);
+      border-radius: 12px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s;
+      font-family: "Inter", sans-serif;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #00e0ff;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 20px rgba(0, 224, 255, 0.2);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    input::file-selector-button {
+      background: linear-gradient(135deg, #00e0ff, #0099cc);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    input::file-selector-button:hover {
+      background: linear-gradient(135deg, #00f0ff, #00bbee);
+      transform: scale(1.05);
+    }
+
+    button {
+      background: linear-gradient(135deg, #00e0ff, #9333ea);
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 224, 255, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #toggleText {
+      margin-top: 1.5rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+
+    #toggleText a {
+      color: #00e0ff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    #toggleText a:hover {
+      color: #00f0ff;
+      text-decoration: underline;
+    }
+
+    #encryptStatus,
+    #decryptStatus {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      animation: fadeIn 0.5s ease;
+      min-height: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #encryptStatus.success,
+    #decryptStatus.success {
+      background: rgba(0, 224, 100, 0.2);
+      border: 1px solid rgba(0, 224, 100, 0.5);
+      color: #00ff88;
+    }
+
+    #encryptStatus.error,
+    #decryptStatus.error {
+      background: rgba(255, 50, 100, 0.2);
+      border: 1px solid rgba(255, 50, 100, 0.5);
+      color: #ff5588;
+    }
+
+    #sharedFiles {
+      margin-top: 2rem;
+    }
+
+    #sharedFiles h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #00e0ff;
+      text-align: left;
+    }
+
+    #fileList {
+      list-style: none;
+      text-align: left;
+    }
+
+    #encryptedFileList li,
+    #decryptedFileList li {
+      background: rgba(0, 224, 255, 0.08);
+      margin: 0.6rem 0;
+      padding: 1rem;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(0, 224, 255, 0.2);
+      transition: all 0.3s;
+      animation: slideIn 0.4s ease;
+    }
+
+    #decryptedFileList li {
+      background: rgba(147, 51, 234, 0.08);
+      border-color: rgba(147, 51, 234, 0.2);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    #encryptedFileList li:hover {
+      background: rgba(0, 224, 255, 0.15);
+      border-color: rgba(0, 224, 255, 0.4);
+      transform: translateX(5px);
+    }
+
+    #decryptedFileList li:hover {
+      background: rgba(147, 51, 234, 0.15);
+      border-color: rgba(147, 51, 234, 0.4);
+      transform: translateX(5px);
+    }
+
+    .file-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #9333ea, #00e0ff);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: none;
+      color: white;
+      width: auto;
+      margin: 0;
+    }
+
+    .download-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 5px 20px rgba(147, 51, 234, 0.4);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      background: rgba(10, 10, 15, 0.8);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(0, 224, 255, 0.1);
+      backdrop-filter: blur(20px);
+    }
+
+    footer p {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .welcome-message {
+      background: rgba(0, 224, 255, 0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(0, 224, 255, 0.3);
+      animation: fadeIn 0.5s ease;
+    }
+
+    .welcome-message h3 {
+      color: #00e0ff;
+      margin-bottom: 0.5rem;
+    }
+
+    .logout-btn {
+      background: linear-gradient(135deg, #ff3366, #ff6b99);
+      padding: 0.5rem 1rem;
+      width: auto;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #00e0ff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Floating particles -->
+  <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+  <div class="particle" style="left: 25%; animation-delay: 3s;"></div>
+  <div class="particle" style="left: 40%; animation-delay: 6s;"></div>
+  <div class="particle" style="left: 60%; animation-delay: 2s;"></div>
+  <div class="particle" style="left: 75%; animation-delay: 5s;"></div>
+  <div class="particle" style="left: 90%; animation-delay: 8s;"></div>
+
+  <header class="navbar">
+    <h1 id="logoLink" style="cursor: pointer;"><span class="logo-icon">🔐</span> SecureShare</h1>
+    <nav id="navLinks">
+      <a href="#" id="navNewsLink">🔔 Cyber News</a>
+      <a href="#" id="navHelpLink">🛡️ Report Cybercrime</a>
+      <a href="#" id="navLoginLink">Login</a>
+      <a href="#" id="navRegisterLink">Register</a>
+    </nav>
+  </header>
+
+  <!-- Cybersecurity News Ticker -->
+  <div id="newsTicker" class="news-ticker hidden">
+    <div class="news-ticker-content">
+      <span class="news-badge">LATEST</span>
+      <span class="news-text" id="newsText">Loading cybersecurity news...</span>
+    </div>
+  </div>
+
+  <main>
+    <div id="heroSection" class="hero-section">
+      <h2>Share Files with Unbreakable Security</h2>
+      <p>Experience true privacy with military-grade end-to-end encryption. Your files, your control, zero compromises.</p>
+      
+      <div class="cta-buttons">
+        <a href="#" class="cta-btn" id="getStartedBtn">Get Started Free</a>
+        <a href="#" class="cta-btn secondary" id="learnMoreBtn">Learn More</a>
+      </div>
+
+      <div class="stats-section">
+        <div class="stat-item">
+          <span class="stat-number">256-bit</span>
+          <span class="stat-label">AES Encryption</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">100%</span>
+          <span class="stat-label">Private</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">∞</span>
+          <span class="stat-label">File Size</span>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>End-to-End Encryption</h3>
+          <p>Your files are encrypted on your device before upload. Only you hold the keys—not even we can access your data.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Lightning Fast</h3>
+          <p>Upload and share files instantly with our optimized infrastructure. No waiting, no delays, just speed.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <h3>Share Anywhere</h3>
+          <p>Generate secure links and share with anyone, anywhere. Full control over expiration and access permissions.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Zero-Knowledge</h3>
+          <p>We operate on a zero-knowledge principle. Your password never leaves your device unencrypted.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Cross-Platform</h3>
+          <p>Access your files from any device—desktop, mobile, or tablet. Seamless experience everywhere.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>No File Limits</h3>
+          <p>Share files of any size without restrictions. From documents to large videos, we've got you covered.</p>
+        </div>
+      </div>
+    </div>
+
+    <section id="authSection" class="card hidden">
+      <h2 id="authTitle">Login to Your Account</h2>
+      <form id="authForm">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit" id="authButton">Login</button>
+        <p id="toggleText">Don't have an account? <a href="#" id="toggleAuth">Register</a></p>
+      </form>
+    </section>
+
+    <section id="fileSection" class="card hidden" style="max-width: 1200px;">
+      <div class="welcome-message">
+        <h3>Welcome back, <span id="currentUser"></span>! 👋</h3>
+        <p>Your files are encrypted end-to-end</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Encryption Section -->
+        <div style="background: rgba(0, 224, 255, 0.05); padding: 2rem; border-radius: 16px; border: 1px solid rgba(0, 224, 255, 0.2);">
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #00e0ff;">🔒 Encrypt Files</h2>
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1rem;">Upload files to encrypt them with end-to-end encryption</p>
+          <input type="file" id="fileInput" multiple />
+          <button id="encryptUploadBtn">🔒 Encrypt & Download</button>
+          <p id="encryptStatus"></p>
+        </div>
+
+        <!-- Decryption Section -->
+        <div style="background: rgba(147, 51, 234, 0.05); padding: 2rem; border-radius: 16px; border: 1px solid rgba(147, 51, 234, 0.2);">
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: #9333ea;">🔓 Decrypt Files</h2>
+          <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1rem;">Upload encrypted files to decrypt and download them</p>
+          <input type="file" id="decryptFileInput" multiple />
+          <button id="decryptDownloadBtn" style="background: linear-gradient(135deg, #9333ea, #c084fc);">🔓 Decrypt & Download</button>
+          <p id="decryptStatus"></p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <div id="encryptedFiles">
+          <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #00e0ff; text-align: left;">📂 Your Encrypted Files</h3>
+          <ul id="encryptedFileList" style="list-style: none; text-align: left;"></ul>
+        </div>
+
+        <div id="decryptedFiles">
+          <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #9333ea; text-align: left;">📂 Your Decrypted Files</h3>
+          <ul id="decryptedFileList" style="list-style: none; text-align: left;"></ul>
+        </div>
+      </div>
+
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </section>
+  </main>
+
+  <!-- News Modal -->
+  <div id="newsModal" class="news-modal hidden">
+    <div class="news-modal-content">
+      <div class="news-modal-header">
+        <h2>🔔 Latest Cybersecurity News</h2>
+        <button class="close-modal" id="closeNewsModal">×</button>
+      </div>
+      <div class="news-grid" id="newsGrid">
+        <!-- News items will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Help/Report Cybercrime Modal -->
+  <div id="helpModal" class="news-modal hidden">
+    <div class="news-modal-content" style="max-width: 1000px;">
+      <div class="news-modal-header">
+        <h2>🛡️ Report Cybercrime & Get Help</h2>
+        <button class="close-modal" id="closeHelpModal">×</button>
+      </div>
+      
+      <div style="margin-bottom: 2rem;">
+        <div style="background: rgba(255, 51, 102, 0.1); border: 2px solid rgba(255, 51, 102, 0.3); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem;">
+          <h3 style="color: #ff5588; font-size: 1.3rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            ⚠️ Emergency? Report Immediately!
+          </h3>
+          <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.8;">
+            If you're experiencing an active cybercrime incident (hacking, data breach, online fraud, identity theft), 
+            report it immediately to the authorities below. Quick action can help minimize damage and catch criminals.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <!-- Indian Cyber Crime Portal -->
+          <div style="background: rgba(0, 224, 255, 0.05); border: 1px solid rgba(0, 224, 255, 0.3); border-radius: 16px; padding: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 2.5rem;">🇮🇳</div>
+              <h3 style="color: #00e0ff; font-size: 1.2rem;">Indian Cyber Crime Coordination Centre (I4C)</h3>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">Official Portal:</p>
+              <a href="https://cybercrime.gov.in" target="_blank" style="color: #00e0ff; font-weight: 600; font-size: 1.1rem; text-decoration: none;">
+                🌐 cybercrime.gov.in
+              </a>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">Email Support:</p>
+              <a href="mailto:complaints@cybercrime.gov.in" style="color: #00e0ff; font-weight: 600; text-decoration: none;">
+                📧 complaints@cybercrime.gov.in
+              </a>
+            </div>
+            <div>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">Helpline Number:</p>
+              <a href="tel:1930" style="color: #00e0ff; font-weight: 700; font-size: 1.3rem; text-decoration: none;">
+                📞 1930
+              </a>
+              <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: 0.3rem;">Available 24x7 (Toll-Free)</p>
+            </div>
+          </div>
+
+          <!-- International Resources -->
+          <div style="background: rgba(147, 51, 234, 0.05); border: 1px solid rgba(147, 51, 234, 0.3); border-radius: 16px; padding: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+              <div style="font-size: 2.5rem;">🌍</div>
+              <h3 style="color: #9333ea; font-size: 1.2rem;">International Cybercrime Authorities</h3>
+            </div>
+            <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; line-height: 1.8;">
+              <p style="margin-bottom: 0.8rem;"><strong style="color: #fff;">USA:</strong> IC3.gov (FBI Internet Crime Complaint Center)</p>
+              <p style="margin-bottom: 0.8rem;"><strong style="color: #fff;">UK:</strong> ActionFraud.police.uk</p>
+              <p style="margin-bottom: 0.8rem;"><strong style="color: #fff;">EU:</strong> Europol Cybercrime Centre</p>
+              <p style="margin-bottom: 0.8rem;"><strong style="color: #fff;">Global:</strong> Interpol Cybercrime Division</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Types of Cybercrimes to Report -->
+        <div style="background: rgba(0, 224, 255, 0.05); border: 1px solid rgba(0, 224, 255, 0.2); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+          <h3 style="color: #00e0ff; font-size: 1.4rem; margin-bottom: 1.5rem; text-align: center;">
+            📋 Common Cybercrimes You Should Report
+          </h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">💳</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">Financial Fraud</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Online banking fraud, UPI scams, credit card theft</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎣</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">Phishing</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Fake emails, SMS, calls asking for personal info</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔐</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">Account Hacking</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Social media, email, or online account breaches</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🛒</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">E-commerce Scams</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Fake websites, non-delivery of goods, payment fraud</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">👤</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">Identity Theft</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Aadhaar, PAN, passport misuse</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 224, 255, 0.2);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
+              <h4 style="color: #fff; font-size: 1rem; margin-bottom: 0.3rem;">Ransomware</h4>
+              <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem;">Data encryption attacks demanding payment</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Why Report? -->
+        <div style="background: rgba(147, 51, 234, 0.05); border: 1px solid rgba(147, 51, 234, 0.2); border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+          <h3 style="color: #9333ea; font-size: 1.4rem; margin-bottom: 1.5rem; text-align: center;">
+            ❓ Why Should You Report Cybercrime?
+          </h3>
+          <div style="display: grid; gap: 1rem;">
+            <div style="display: flex; gap: 1rem; align-items: start;">
+              <div style="font-size: 2rem; flex-shrink: 0;">🎯</div>
+              <div>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem;">Help Catch Criminals</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Your report provides crucial evidence that helps law enforcement track and arrest cybercriminals. Every report matters!</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: start;">
+              <div style="font-size: 2rem; flex-shrink: 0;">🛡️</div>
+              <div>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem;">Protect Others</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Reporting prevents criminals from targeting other victims. Your action can save others from similar attacks.</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: start;">
+              <div style="font-size: 2rem; flex-shrink: 0;">💰</div>
+              <div>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem;">Recover Your Money</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Quick reporting increases chances of freezing fraudulent transactions and recovering stolen funds through proper channels.</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: start;">
+              <div style="font-size: 2rem; flex-shrink: 0;">📊</div>
+              <div>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem;">Build Better Defenses</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Reports help authorities understand crime patterns and develop better protection systems for everyone.</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: start;">
+              <div style="font-size: 2rem; flex-shrink: 0;">⚖️</div>
+              <div>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem;">Legal Documentation</h4>
+                <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.6;">Official reports serve as legal proof for insurance claims, bank disputes, and court proceedings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How to Report -->
+        <div style="background: rgba(0, 224, 255, 0.05); border: 1px solid rgba(0, 224, 255, 0.2); border-radius: 16px; padding: 2rem;">
+          <h3 style="color: #00e0ff; font-size: 1.4rem; margin-bottom: 1.5rem; text-align: center;">
+            📝 How to Report Cybercrime (Step-by-Step)
+          </h3>
+          <div style="display: grid; gap: 1rem;">
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1.2rem; border-radius: 12px; border-left: 4px solid #00e0ff;">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="background: #00e0ff; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">1</div>
+                <h4 style="color: #fff; font-size: 1.1rem;">Visit cybercrime.gov.in</h4>
+              </div>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-left: 3rem;">Go to the official portal and click on "Report Anonymous Complaint" or "File a Complaint"</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1.2rem; border-radius: 12px; border-left: 4px solid #00e0ff;">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="background: #00e0ff; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">2</div>
+                <h4 style="color: #fff; font-size: 1.1rem;">Choose Crime Category</h4>
+              </div>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-left: 3rem;">Select the type of cybercrime (financial fraud, hacking, phishing, etc.)</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1.2rem; border-radius: 12px; border-left: 4px solid #00e0ff;">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="background: #00e0ff; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">3</div>
+                <h4 style="color: #fff; font-size: 1.1rem;">Provide Details</h4>
+              </div>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-left: 3rem;">Fill in incident details, date, time, and how the crime occurred</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1.2rem; border-radius: 12px; border-left: 4px solid #00e0ff;">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="background: #00e0ff; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">4</div>
+                <h4 style="color: #fff; font-size: 1.1rem;">Upload Evidence</h4>
+              </div>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-left: 3rem;">Attach screenshots, emails, transaction details, chat records, or any proof you have</p>
+            </div>
+            <div style="background: rgba(0, 224, 255, 0.08); padding: 1.2rem; border-radius: 12px; border-left: 4px solid #00e0ff;">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="background: #00e0ff; color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">5</div>
+                <h4 style="color: #fff; font-size: 1.1rem;">Submit & Save Acknowledgment</h4>
+              </div>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-left: 3rem;">Save your complaint number for tracking. You'll receive updates via email/SMS</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: rgba(0, 224, 255, 0.1); border-radius: 12px;">
+          <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; line-height: 1.8;">
+            <strong style="color: #00e0ff;">Remember:</strong> Don't delay reporting. The sooner you report, the better the chances of action and recovery. Stay vigilant, stay safe! 🛡️
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 SecureShare | End-to-End Encrypted File Sharing | Your Privacy, Our Priority</p>
+  </footer>
+
+  <script>
+    const toggleLink = document.getElementById('toggleAuth');
+    const title = document.getElementById('authTitle');
+    const form = document.getElementById('authForm');
+    const toggleText = document.getElementById('toggleText');
+    const authSection = document.getElementById('authSection');
+    const fileSection = document.getElementById('fileSection');
+    const encryptBtn = document.getElementById('encryptUploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const encryptStatus = document.getElementById('encryptStatus');
+    const decryptBtn = document.getElementById('decryptDownloadBtn');
+    const decryptFileInput = document.getElementById('decryptFileInput');
+    const decryptStatus = document.getElementById('decryptStatus');
+    const encryptedFileList = document.getElementById('encryptedFileList');
+    const decryptedFileList = document.getElementById('decryptedFileList');
+    const currentUserSpan = document.getElementById('currentUser');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const usernameInput = document.getElementById('username');
+    const navLoginLink = document.getElementById('navLoginLink');
+    const navRegisterLink = document.getElementById('navRegisterLink');
+    const heroSection = document.getElementById('heroSection');
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    const learnMoreBtn = document.getElementById('learnMoreBtn');
+    const logoLink = document.getElementById('logoLink');
+    const navNewsLink = document.getElementById('navNewsLink');
+    const newsModal = document.getElementById('newsModal');
+    const closeNewsModal = document.getElementById('closeNewsModal');
+    const newsTicker = document.getElementById('newsTicker');
+    const newsText = document.getElementById('newsText');
+    const newsGrid = document.getElementById('newsGrid');
+    const navHelpLink = document.getElementById('navHelpLink');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpModal = document.getElementById('closeHelpModal');
+
+    let isLogin = true;
+    let encryptedFiles = [];
+    let decryptedFiles = [];
+    let currentUsername = '';
+    let newsIndex = 0;
+
+    // Cybersecurity News Data
+    const cyberNews = [
+      {
+        category: "Breach Alert",
+        title: "Major Cloud Provider Reports Data Exposure Affecting Millions",
+        description: "A misconfigured database exposed sensitive customer information including email addresses and encrypted passwords. The breach was discovered by security researchers and promptly patched.",
+        date: "2 hours ago",
+        link: "#"
+      },
+      {
+        category: "Zero-Day",
+        title: "Critical Vulnerability Discovered in Popular Enterprise Software",
+        description: "Security researchers have identified a critical zero-day vulnerability that could allow remote code execution. Patches are being rolled out urgently to affected systems worldwide.",
+        date: "5 hours ago",
+        link: "#"
+      },
+      {
+        category: "Ransomware",
+        title: "New Ransomware Strain Targets Healthcare Infrastructure",
+        description: "A sophisticated ransomware campaign has been detected targeting hospitals and healthcare providers. The malware uses advanced encryption and demands cryptocurrency payments.",
+        date: "8 hours ago",
+        link: "#"
+      },
+      {
+        category: "AI Security",
+        title: "Researchers Demonstrate AI Model Poisoning Attack",
+        description: "New research shows how adversaries can manipulate machine learning models during training, potentially compromising AI-powered security systems and decision-making processes.",
+        date: "12 hours ago",
+        link: "#"
+      },
+      {
+        category: "Privacy",
+        title: "New Data Protection Regulations Take Effect Globally",
+        description: "Stricter privacy laws now require companies to implement end-to-end encryption and provide users with greater control over their personal data and digital footprint.",
+        date: "1 day ago",
+        link: "#"
+      },
+      {
+        category: "Phishing",
+        title: "Sophisticated Phishing Campaign Bypasses Multi-Factor Authentication",
+        description: "Cybercriminals are using advanced social engineering techniques combined with real-time phishing kits to intercept one-time passwords and bypass MFA protections.",
+        date: "1 day ago",
+        link: "#"
+      },
+      {
+        category: "IoT Security",
+        title: "Massive Botnet Discovered Exploiting Smart Home Devices",
+        description: "Security firms have uncovered a botnet comprising over 100,000 compromised IoT devices being used for DDoS attacks and cryptocurrency mining operations.",
+        date: "2 days ago",
+        link: "#"
+      },
+      {
+        category: "Encryption",
+        title: "Quantum-Resistant Encryption Standards Gain Industry Adoption",
+        description: "Major technology companies announce transition plans to post-quantum cryptography, preparing for the era when quantum computers could break current encryption methods.",
+        date: "3 days ago",
+        link: "#"
+      }
+    ];
+
+    // Rotate news ticker
+    function rotateNews() {
+      const headlines = cyberNews.map(news => `${news.category.toUpperCase()}: ${news.title}`);
+      newsText.textContent = headlines[newsIndex];
+      newsIndex = (newsIndex + 1) % headlines.length;
+    }
+
+    // Initialize news ticker
+    setInterval(rotateNews, 8000);
+    rotateNews();
+
+    // Show news ticker on homepage
+    function showNewsTicker() {
+      newsTicker.classList.remove('hidden');
+    }
+
+    function hideNewsTicker() {
+      newsTicker.classList.add('hidden');
+    }
+
+    // Load news into modal
+    function loadNewsModal() {
+      newsGrid.innerHTML = '';
+      cyberNews.forEach((news, index) => {
+        const newsItem = document.createElement('div');
+        newsItem.className = 'news-item';
+        newsItem.innerHTML = `
+          <div class="news-item-header">
+            <span class="news-category">${news.category}</span>
+            <span class="news-date">${news.date}</span>
+          </div>
+          <h3>${news.title}</h3>
+          <p>${news.description}</p>
+          <a href="${news.link}" class="news-link">Read more →</a>
+        `;
+        newsGrid.appendChild(newsItem);
+      });
+    }
+
+    // Open news modal
+    navNewsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      loadNewsModal();
+      newsModal.classList.remove('hidden');
+    });
+
+    // Close news modal
+    closeNewsModal.addEventListener('click', () => {
+      newsModal.classList.add('hidden');
+    });
+
+    // Close modal when clicking outside
+    newsModal.addEventListener('click', (e) => {
+      if (e.target === newsModal) {
+        newsModal.classList.add('hidden');
+      }
+    });
+
+    // Open help modal
+    navHelpLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      helpModal.classList.remove('hidden');
+    });
+
+    // Close help modal
+    closeHelpModal.addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+    });
+
+    // Close help modal when clicking outside
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) {
+        helpModal.classList.add('hidden');
+      }
+    });
+
+    // Logo click - return to homepage
+    logoLink.addEventListener('click', () => {
+      heroSection.classList.remove('hidden');
+      authSection.classList.add('hidden');
+      fileSection.classList.add('hidden');
+      showNewsTicker();
+    });
+
+    // Get Started button
+    getStartedBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      heroSection.classList.add('hidden');
+      authSection.classList.remove('hidden');
+      hideNewsTicker();
+      isLogin = false;
+      title.textContent = "Register a New Account";
+      document.getElementById('authButton').textContent = "Register";
+      toggleText.innerHTML = "Already have an account? <a href=\"#\" id=\"toggleAuth\">Login</a>";
+    });
+
+    // Learn More button - scroll to features
+    learnMoreBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelector('.features-grid').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Toggle between login and register
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'toggleAuth') {
+        e.preventDefault();
+        isLogin = !isLogin;
+        title.textContent = isLogin ? "Login to Your Account" : "Register a New Account";
+        document.getElementById('authButton').textContent = isLogin ? "Login" : "Register";
+        toggleText.innerHTML = isLogin
+          ? "Don't have an account? <a href=\"#\" id=\"toggleAuth\">Register</a>"
+          : "Already have an account? <a href=\"#\" id=\"toggleAuth\">Login</a>";
+      }
+    });
+
+    // Handle authentication
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      currentUsername = usernameInput.value;
+      currentUserSpan.textContent = currentUsername;
+      
+      heroSection.classList.add('hidden');
+      authSection.classList.add('hidden');
+      fileSection.classList.remove('hidden');
+      hideNewsTicker();
+      
+      // Add some demo files
+      encryptedFiles = [
+        { name: 'project-proposal.pdf', size: '2.4 MB', encrypted: true },
+        { name: 'secure-data.zip', size: '15.8 MB', encrypted: true }
+      ];
+      renderFileLists();
+    });
+
+    // Handle file encryption
+    encryptBtn.addEventListener('click', () => {
+      const files = fileInput.files;
+      
+      if (files.length === 0) {
+        showStatus(encryptStatus, 'Please select a file to encrypt', 'error');
+        return;
+      }
+
+      showStatus(encryptStatus, 'Encrypting files... <span class="loading"></span>', 'success');
+      
+      setTimeout(() => {
+        Array.from(files).forEach(file => {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          
+          // Add to encrypted files list
+          encryptedFiles.push({
+            name: file.name + '.encrypted',
+            originalName: file.name,
+            size: `${fileSizeMB} MB`,
+            encrypted: true
+          });
+          
+          // Simulate download of encrypted file
+          const encryptedFileName = file.name + '.encrypted';
+          const blob = new Blob(['encrypted content'], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = encryptedFileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        });
+        
+        renderFileLists();
+        showStatus(encryptStatus, `Successfully encrypted and downloaded ${files.length} file(s)! 🎉`, 'success');
+        fileInput.value = '';
+      }, 2000);
+    });
+
+    // Handle file decryption
+    decryptBtn.addEventListener('click', () => {
+      const files = decryptFileInput.files;
+      
+      if (files.length === 0) {
+        showStatus(decryptStatus, 'Please select an encrypted file to decrypt', 'error');
+        return;
+      }
+
+      showStatus(decryptStatus, 'Decrypting files... <span class="loading"></span>', 'success');
+      
+      setTimeout(() => {
+        Array.from(files).forEach(file => {
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          const decryptedFileName = file.name.replace('.encrypted', '');
+          
+          // Add to decrypted files list
+          decryptedFiles.push({
+            name: decryptedFileName,
+            size: `${fileSizeMB} MB`,
+            decrypted: true
+          });
+          
+          // Simulate download of decrypted file
+          const blob = new Blob(['decrypted content'], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = decryptedFileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        });
+        
+        renderFileLists();
+        showStatus(decryptStatus, `Successfully decrypted and downloaded ${files.length} file(s)! ✅`, 'success');
+        decryptFileInput.value = '';
+      }, 2000);
+    });
+
+    // Render file lists
+    function renderFileLists() {
+      // Render encrypted files
+      encryptedFileList.innerHTML = '';
+      encryptedFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="file-info">
+            <div class="file-name">🔒 ${file.name}</div>
+            <div class="file-size">${file.size} • Encrypted</div>
+          </div>
+          <button class="download-btn" onclick="downloadEncryptedFile(${index})">⬇️ Download</button>
+        `;
+        encryptedFileList.appendChild(li);
+      });
+
+      // Render decrypted files
+      decryptedFileList.innerHTML = '';
+      decryptedFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div class="file-info">
+            <div class="file-name">🔓 ${file.name}</div>
+            <div class="file-size">${file.size} • Decrypted</div>
+          </div>
+          <button class="download-btn" style="background: linear-gradient(135deg, #9333ea, #c084fc);" onclick="downloadDecryptedFile(${index})">⬇️ Download</button>
+        `;
+        decryptedFileList.appendChild(li);
+      });
+    }
+
+    // Download encrypted file
+    window.downloadEncryptedFile = (index) => {
+      const file = encryptedFiles[index];
+      showStatus(encryptStatus, `Downloading ${file.name}...`, 'success');
+      
+      setTimeout(() => {
+        showStatus(encryptStatus, `${file.name} downloaded successfully! ✅`, 'success');
+      }, 1500);
+    };
+
+    // Download decrypted file
+    window.downloadDecryptedFile = (index) => {
+      const file = decryptedFiles[index];
+      showStatus(decryptStatus, `Downloading ${file.name}...`, 'success');
+      
+      setTimeout(() => {
+        showStatus(decryptStatus, `${file.name} downloaded successfully! ✅`, 'success');
+      }, 1500);
+    };
+
+    // Show status message
+    function showStatus(element, message, type) {
+      element.innerHTML = message;
+      element.className = type;
+      element.style.display = 'block';
+      
+      if (!message.includes('loading')) {
+        setTimeout(() => {
+          element.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      fileSection.classList.add('hidden');
+      heroSection.classList.remove('hidden');
+      showNewsTicker();
+      encryptedFiles = [];
+      decryptedFiles = [];
+      currentUsername = '';
+      usernameInput.value = '';
+      document.getElementById('password').value = '';
+      encryptedFileList.innerHTML = '';
+      decryptedFileList.innerHTML = '';
+    });
+
+    // Nav bar login link
+    navLoginLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      heroSection.classList.add('hidden');
+      fileSection.classList.add('hidden');
+      authSection.classList.remove('hidden');
+      hideNewsTicker();
+      isLogin = true;
+      title.textContent = "Login to Your Account";
+      document.getElementById('authButton').textContent = "Login";
+      toggleText.innerHTML = "Don't have an account? <a href=\"#\" id=\"toggleAuth\">Register</a>";
+    });
+
+    // Nav bar register link
+    navRegisterLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      heroSection.classList.add('hidden');
+      fileSection.classList.add('hidden');
+      authSection.classList.remove('hidden');
+      hideNewsTicker();
+      isLogin = false;
+      title.textContent = "Register a New Account";
+      document.getElementById('authButton').textContent = "Register";
+      toggleText.innerHTML = "Already have an account? <a href=\"#\" id=\"toggleAuth\">Login</a>";
+    });
+
+    // Show news ticker on page load
+    showNewsTicker();
+  </script>
+  
+  <!-- JS Files -->
+  <!-- This utils file must be loaded first -->
+  <script src="js/utils.js"></script> 
+  <script src="js/encrypt.js"></script>
+  <script src="js/decrypt.js"></script>
+</body>
+</html>
